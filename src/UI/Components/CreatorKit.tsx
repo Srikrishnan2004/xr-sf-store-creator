@@ -2035,7 +2035,7 @@ export const CreatorKit = () => {
 
         <Box
           component="img"
-          src="/Logo SF.png"
+          src="/Logo.png"
           sx={{
             height: '35px',
             width: 'auto',
