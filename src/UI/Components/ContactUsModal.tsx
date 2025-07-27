@@ -195,17 +195,17 @@ const ContactUsModal = () => {
 
             <h3 style={styles.sectionTitle}>Frequently Asked Questions (FAQs)</h3>
             <div style={styles.divider}></div>
-            <h4 style={styles.sectionTitle}>1. What is Delta XR?</h4>
+            <h4 style={styles.sectionTitle}>1. What is Shackit XR?</h4>
             <p style={styles.text}>
-              Delta XR is an immersive extended reality (XR) platform developed
+              Shackit XR is an immersive extended reality (XR) platform developed
               by Strategy Fox. It allows users to explore virtual 3D
               environments, interact with products, and enjoy unique digital
               experiences.
             </p>
 
-            <h4 style={styles.sectionTitle}>2. What devices can I use to access Delta XR?</h4>
+            <h4 style={styles.sectionTitle}>2. What devices can I use to access Shackit XR?</h4>
             <p style={styles.text}>
-              Delta XR is compatible with modern browsers and devices that
+              Shackit XR is compatible with modern browsers and devices that
               support WebGL, including:
             </p>
             <ul style={styles.list}>
@@ -213,15 +213,15 @@ const ContactUsModal = () => {
               <li>Mobile/Tablet: iOS and Android devices with updated browsers</li>
             </ul>
 
-            <h4 style={styles.sectionTitle}>3. How can I make purchases within Delta XR?</h4>
+            <h4 style={styles.sectionTitle}>3. How can I make purchases within Shackit XR?</h4>
             <p style={styles.text}>
-              All purchases made within Delta XR are processed through secure
+              All purchases made within Shackit XR are processed through secure
               third-party platforms, such as Shopify. Simply click on the
               product within the experience to view details and complete the
               transaction.
             </p>
 
-            <h4 style={styles.sectionTitle}>4. What if I face technical issues while using Delta XR?</h4>
+            <h4 style={styles.sectionTitle}>4. What if I face technical issues while using Shackit XR?</h4>
             <p style={styles.text}>
               If you experience any technical problems, please:
             </p>
