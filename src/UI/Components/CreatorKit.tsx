@@ -54,6 +54,7 @@ import {
   Search,
 } from "lucide-react";
 import PlaceHolderData from "@/data/environment/placeHolderData/PlaceHolderData";
+import { ProductService } from "@/api/shopifyAPIService";
 
 // Glassmorphism styled components
 const GlassBox = styled(Box)(() => ({
@@ -1202,7 +1203,7 @@ const PlaceholderEditor = memo(
 );
 
 export const CreatorKit = () => {
-  const { products } = useComponentStore();
+  const { products, setProducts } = useComponentStore();
   const {
     envAssets,
     modifyEnvAsset,
@@ -1212,7 +1213,7 @@ export const CreatorKit = () => {
     activeTab: assetActiveTab,
     setActiveTab: setAssetActiveTab,
   } = useEnvAssetStore();
-  const { envProducts, modifyEnvProduct, activeProductId, setActiveProductId, activeTab, setActiveTab } =
+  const { envProducts, setEnvProducts, modifyEnvProduct, activeProductId, setActiveProductId, activeTab, setActiveTab } =
     useEnvProductStore();
 
   const { brandData } = useBrandStore();
@@ -1939,6 +1940,107 @@ export const CreatorKit = () => {
     if (!result.isConfirmed) return;
 
     try {
+      // Show loading state
+      Swal.fire({
+        title: "Validating Products...",
+        text: "Checking if all placed products still exist in your Shopify store...",
+        icon: "info",
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        customClass: {
+          title: styles.swalTitle,
+          popup: styles.swalPopup,
+          htmlContainer: styles.swalHtmlContainer,
+          icon: styles.swalIcon,
+        },
+      });
+
+      // Fetch fresh products from Shopify
+      const freshProducts = (brandData.shopify_store_name !== 'nufewd-83.myshopify.com' && brandData.shopify_store_name !== 'h49c6z-yr.myshopify.com')
+        ? await ProductService.getAllProducts(brandData.brand_name)
+        : await ProductService.getAllProductsFromVendor(brandData.brand_name, brandData.market);
+
+      // Get all placed products in the environment
+      const placedProducts = Object.values(envProducts).filter((p) => p.isEnvironmentProduct);
+      
+      // Check for missing products
+      const missingProducts = placedProducts.filter(placedProduct => {
+        return !freshProducts.find(freshProduct => freshProduct.id === placedProduct.id);
+      });
+
+      if (missingProducts.length > 0) {
+        // Close the loading dialog
+        Swal.close();
+
+        // Show missing products error
+        const missingProductNames = missingProducts.map(product => {
+          const originalProduct = products.find(p => p.id === product.id);
+          return originalProduct?.title || `Product ID: ${product.id}`;
+        }).join(', ');
+
+        const result = await Swal.fire({
+          title: "Oops! Missing Products Detected",
+          html: `
+            <div style="text-align: left; margin-bottom: 20px;">
+              <p>Some products placed in your environment are no longer available in your Shopify store:</p>
+              <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <strong>Missing Products:</strong><br/>
+                ${missingProductNames}
+              </div>
+              <p style="font-size: 14px; color: #ccc;">
+                You might have deleted these products from your Shopify dashboard. 
+                Please remove them from your environment or restore them in Shopify.
+              </p>
+            </div>
+          `,
+          icon: "warning",
+          showConfirmButton: true,
+          showCancelButton: true,
+          confirmButtonText: "Refresh & Continue",
+          cancelButtonText: "Cancel",
+          allowOutsideClick: false,
+          customClass: {
+            title: styles.swalTitle,
+            popup: styles.swalPopup,
+            htmlContainer: styles.swalHtmlContainer,
+            icon: styles.swalIcon,
+            actions: styles.swalActions,
+            confirmButton: `${styles.swalButton} ${styles.swalConfirmButton}`,
+            cancelButton: `${styles.swalButton} ${styles.swalCancelButton}`,
+          },
+        });
+
+        if (result.isConfirmed) {
+          // Update products in store and re-render
+          setProducts(freshProducts);
+          
+          // Remove missing products from environment
+          const updatedEnvProducts = { ...envProducts };
+          missingProducts.forEach(missingProduct => {
+            delete updatedEnvProducts[missingProduct.id];
+          });
+          setEnvProducts(updatedEnvProducts);
+
+          // Show success message for refresh
+          Swal.fire({
+            title: "Environment Updated",
+            text: "Missing products have been removed from your environment. You can now save your store.",
+            icon: "success",
+            customClass: {
+              title: styles.swalTitle,
+              popup: styles.swalPopup,
+              htmlContainer: styles.swalHtmlContainer,
+              icon: styles.swalIcon,
+            },
+          });
+        }
+        return;
+      }
+
+      // Close the loading dialog
+      Swal.close();
+
+      // Proceed with saving if all products are valid
       const envResponse = await EnvStoreService.storeEnvData(
         brandData.brand_name,
         Object.values(envProducts).filter((p) => p.isEnvironmentProduct),
@@ -1983,7 +2085,7 @@ export const CreatorKit = () => {
         },
       });
     }
-  }, [brandData, envProducts, envAssets]);
+  }, [brandData, envProducts, envAssets, products, setProducts, setEnvProducts]);
 
   // Capture snapshot when a product starts being edited
   useEffect(() => {
