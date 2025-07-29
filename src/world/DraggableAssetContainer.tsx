@@ -52,7 +52,10 @@ const DraggableAssetContainer = ({
   const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-    if (!modelUrl) return;
+    if (!modelUrl) {
+      setModel(null); // Clear model if URL becomes null
+      return;
+    }
 
     let isMounted = true;
     const loadModel = async () => {
@@ -221,18 +224,9 @@ const DraggableAssetContainer = ({
     return envAsset.src;
   }, [envAsset.type, envAsset.src]);
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const texture = imageUrl ? useLoader(TextureLoader, imageUrl) : null;
-  const imageTexture = useMemo(() => {
-    if (!imageUrl) return null;
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    try {
-      return texture;
-    } catch (error) {
-      console.error("Error Loading Asset Image: ", error);
-      return null;
-    }
-  }, [imageUrl, texture]);
+  const imageTexture = imageUrl ? useLoader(TextureLoader, imageUrl, (loader) => {
+    loader.setCrossOrigin('anonymous');
+  }) : null;
 
   const computedSizeForImage = useMemo(() => {
     if (!imageTexture) return null;
@@ -546,7 +540,7 @@ const DraggableAssetContainer = ({
               receiveShadow
             />
           )}
-          {envAsset.type === "PHOTO" && computedSizeForImage && (
+          {envAsset.type === "PHOTO" && computedSizeForImage && imageTexture && (
             <>
               <mesh rotation={computedRotation} ref={meshRef}>
                 <planeGeometry
