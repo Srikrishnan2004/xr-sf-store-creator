@@ -1958,7 +1958,7 @@ export const CreatorKit = () => {
       // Fetch fresh products from Shopify
       const freshProducts = (brandData.shopify_store_name !== 'nufewd-83.myshopify.com' && brandData.shopify_store_name !== 'h49c6z-yr.myshopify.com')
         ? await ProductService.getAllProducts(brandData.brand_name)
-        : await ProductService.getAllProductsFromVendor(brandData.brand_name, brandData.market);
+        : await ProductService.getAllProductsFromVendor(brandData.brand_name);
 
       // Get all placed products in the environment
       const placedProducts = Object.values(envProducts).filter((p) => p.isEnvironmentProduct);
