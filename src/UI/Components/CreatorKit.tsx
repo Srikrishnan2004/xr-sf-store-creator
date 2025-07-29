@@ -14,6 +14,7 @@ import {
   ImageList,
   ImageListItem,
   InputAdornment,
+  Tooltip,
 } from "@mui/material";
 import TutorialButton from "./TutorialButton";
 import TutorialOverlay from "./TutorialOverlay";
@@ -52,6 +53,7 @@ import {
   ZoomIn,
   Check,
   Search,
+  RefreshCw,
 } from "lucide-react";
 import PlaceHolderData from "@/data/environment/placeHolderData/PlaceHolderData";
 import { ProductService } from "@/api/shopifyAPIService";
@@ -73,7 +75,9 @@ const GlassBox = styled(Box)(() => ({
   },
 }));
 
-const GlassButton = styled(Button)<{ isPrimary?: boolean; isSmall?: boolean }>(
+const GlassButton = styled(Button, {
+  shouldForwardProp: (prop) => prop !== 'isPrimary' && prop !== 'isSmall'
+})<{ isPrimary?: boolean; isSmall?: boolean }>(
   ({ isPrimary, isSmall }) => ({
     borderRadius: "12px",
     textTransform: "none",
@@ -1230,6 +1234,7 @@ export const CreatorKit = () => {
   // Track previous state for products / assets to enable discard
   const [previousProductState, setPreviousProductState] = useState<EnvProduct | null>(null);
   const [previousAssetState, setPreviousAssetState] = useState<EnvAsset | null>(null);
+  const cleanupPerformedRef = useRef(false);
 
   // Load Placeholder data
   const placeHolderData = useMemo(() => {
@@ -1237,6 +1242,11 @@ export const CreatorKit = () => {
     return environmentData[brandData?.environment_name.toUpperCase()]
       .placeHolderData;
   }, [brandData]);
+
+  // Reset cleanup flag when products change
+  useEffect(() => {
+    cleanupPerformedRef.current = false;
+  }, [products]);
 
   // Filter products based on search query
   const filteredProducts = useMemo(() => {
@@ -1708,6 +1718,26 @@ export const CreatorKit = () => {
       );
       if (!product) return;
 
+      // Check if 3D model is still available, if not fallback to first image
+      if (type === "MODEL_3D") {
+        const selectedModel = product.models[index];
+        if (!selectedModel || !selectedModel.sources || selectedModel.sources.length === 0) {
+          console.log(`⚠️ 3D model at index ${index} is no longer available for product ${product.id}, switching to first image`);
+          
+          // Auto-fallback to first image
+          const fallbackEnvProduct: EnvProduct = {
+            id: product.id,
+            type: "PHOTO",
+            imageIndex: 0,
+            modelIndex: undefined,
+            isEnvironmentProduct: true,
+          };
+          
+          modifyEnvProduct(product.id, fallbackEnvProduct);
+          return;
+        }
+      }
+
       // Calculate current environment usage (excluding current product)
       const currentEnvironmentSize = Object.values(envProducts)
         .filter(envProduct => envProduct.isEnvironmentProduct && envProduct.id !== activeProductId)
@@ -1960,20 +1990,45 @@ export const CreatorKit = () => {
         ? await ProductService.getAllProducts(brandData.brand_name)
         : await ProductService.getAllProductsFromVendor(brandData.brand_name);
 
-      // Get all placed products in the environment
-      const placedProducts = Object.values(envProducts).filter((p) => p.isEnvironmentProduct);
+      // Also fetch the latest environment data to ensure we have the most up-to-date state
+      console.log("🔄 Fetching latest environment data for validation...");
+      const latestEnvData = await EnvStoreService.getEnvData(brandData.brand_name);
+      const currentEnvProducts = latestEnvData?.envProducts || envProducts;
+
+      // Get all placed products in the environment using the latest data
+      const placedProducts = Object.values(currentEnvProducts).filter((p) => p.isEnvironmentProduct);
       
       // Check for missing products
       const missingProducts = placedProducts.filter(placedProduct => {
         return !freshProducts.find(freshProduct => freshProduct.id === placedProduct.id);
       });
 
-      if (missingProducts.length > 0) {
+      console.log("🔍 Missing products check:", {
+        placedProductsCount: placedProducts.length,
+        freshProductsCount: freshProducts.length,
+        missingProductsCount: missingProducts.length,
+        missingProductIds: missingProducts.map(p => p.id),
+        cleanupPerformed: cleanupPerformedRef.current,
+        currentEnvProductsCount: Object.keys(currentEnvProducts).length
+      });
+
+      // Double-check if missing products still exist in the current environment data
+      const stillMissingProducts = missingProducts.filter(missingProduct => 
+        currentEnvProducts[missingProduct.id]
+      );
+
+      console.log("🔍 Double-check missing products:", {
+        originalMissingCount: missingProducts.length,
+        stillMissingCount: stillMissingProducts.length,
+        stillMissingIds: stillMissingProducts.map(p => p.id)
+      });
+
+      if (stillMissingProducts.length > 0 && !cleanupPerformedRef.current) {
         // Close the loading dialog
         Swal.close();
 
         // Show missing products error
-        const missingProductNames = missingProducts.map(product => {
+        const missingProductNames = stillMissingProducts.map(product => {
           const originalProduct = products.find(p => p.id === product.id);
           return originalProduct?.title || `Product ID: ${product.id}`;
         }).join(', ');
@@ -2011,30 +2066,89 @@ export const CreatorKit = () => {
         });
 
         if (result.isConfirmed) {
-          // Update products in store and re-render
-          setProducts(freshProducts);
-          
-          // Remove missing products from environment
-          const updatedEnvProducts = { ...envProducts };
-          missingProducts.forEach(missingProduct => {
-            delete updatedEnvProducts[missingProduct.id];
-          });
-          setEnvProducts(updatedEnvProducts);
+          try {
+            // Show loading state for server update
+            Swal.fire({
+              title: "Updating Environment...",
+              text: "Removing missing products from server...",
+              icon: "info",
+              allowOutsideClick: false,
+              showConfirmButton: false,
+              customClass: {
+                title: styles.swalTitle,
+                popup: styles.swalPopup,
+                htmlContainer: styles.swalHtmlContainer,
+                icon: styles.swalIcon,
+              },
+            });
 
-          // Show success message for refresh
-          Swal.fire({
-            title: "Environment Updated",
-            text: "Missing products have been removed from your environment. You can now save your store.",
-            icon: "success",
-            customClass: {
-              title: styles.swalTitle,
-              popup: styles.swalPopup,
-              htmlContainer: styles.swalHtmlContainer,
-              icon: styles.swalIcon,
-            },
-          });
+            // Remove missing products from environment using current data
+            const updatedEnvProducts = { ...currentEnvProducts };
+            stillMissingProducts.forEach(missingProduct => {
+              delete updatedEnvProducts[missingProduct.id];
+            });
+            setEnvProducts(updatedEnvProducts);
+
+            // Update server with cleaned environment data
+            console.log("🔄 Updating server with cleaned environment data from modal...");
+            await EnvStoreService.storeEnvData(
+              brandData.brand_name,
+              Object.values(updatedEnvProducts).filter((p) => p.isEnvironmentProduct),
+              Object.values(envAssets).filter((a) => a.isEnvironmentAsset)
+            );
+            console.log("✅ Server updated successfully from modal");
+
+            // Force a re-fetch of environment data to ensure consistency
+            console.log("🔄 Triggering environment data refresh...");
+            try {
+              const refreshedEnvData = await EnvStoreService.getEnvData(brandData.brand_name);
+              if (refreshedEnvData) {
+                setEnvProducts(refreshedEnvData.envProducts);
+                setEnvAssets(refreshedEnvData.envAssets);
+                console.log("✅ Environment data refreshed successfully");
+              }
+            } catch (error) {
+              console.error("❌ Error refreshing environment data:", error);
+            }
+
+            // Mark cleanup as performed to prevent showing the same modal again
+            cleanupPerformedRef.current = true;
+
+            // Small delay to ensure state updates are processed
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Show success message for refresh
+            Swal.fire({
+              title: "Environment Updated",
+              text: "Missing products have been removed from your environment and server. You can now save your store.",
+              icon: "success",
+              customClass: {
+                title: styles.swalTitle,
+                popup: styles.swalPopup,
+                htmlContainer: styles.swalHtmlContainer,
+                icon: styles.swalIcon,
+              },
+            });
+          } catch (error) {
+            console.error("❌ Error updating server from modal:", error);
+            Swal.fire({
+              title: "Update Error",
+              text: "Failed to update server. Please try again.",
+              icon: "error",
+              customClass: {
+                title: styles.swalTitle,
+                popup: styles.swalPopup,
+                htmlContainer: styles.swalHtmlContainer,
+                icon: styles.swalIcon,
+              },
+            });
+          }
         }
         return;
+      } else if (stillMissingProducts.length > 0 && cleanupPerformedRef.current) {
+        // If cleanup has already been performed but there are still missing products,
+        // proceed directly to saving without showing the modal
+        console.log("🔄 Cleanup already performed, proceeding with save despite missing products");
       }
 
       // Close the loading dialog
@@ -2048,6 +2162,10 @@ export const CreatorKit = () => {
       );
 
       if (!envResponse) throw new Error("Failed to update store");
+
+      // Re-render product list
+      console.log("🔄 Re-rendering product list after save...");
+      setProducts([...products]); // Force re-render by creating new array reference
 
       Swal.fire({
         title: "XR Store Updated",
@@ -2207,6 +2325,59 @@ export const CreatorKit = () => {
                     </Typography>
                   )}
                 </Box>
+
+                {/* Sync Button - At the top of products section */}
+                <Box sx={{ mb: 2, width: '100%' }}>
+                  <Tooltip
+                    title="Sync changes to fetch the latest product information"
+                    placement="top"
+                    arrow
+                    sx={{
+                      '& .MuiTooltip-tooltip': {
+                        background: 'rgba(0, 0, 0, 0.9)',
+                        color: 'white',
+                        fontSize: '12px',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                      },
+                      '& .MuiTooltip-arrow': {
+                        color: 'rgba(0, 0, 0, 0.9)',
+                      },
+                    }}
+                  >
+                    <GlassButton
+                      onClick={() => {
+                        console.log("🔄 Syncing - reloading website...");
+                        window.location.reload();
+                      }}
+                      sx={{
+                        width: '100%',
+                        background: "rgba(255, 127, 50, 0.1)",
+                        border: "1px solid rgba(255, 127, 50, 0.3)",
+                        color: "#FF7F32",
+                        px: 3,
+                        py: 1.5,
+                        borderRadius: "12px",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        transition: "all 0.3s ease",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 1,
+                        "&:hover": {
+                          background: "rgba(255, 127, 50, 0.2)",
+                          borderColor: "#FF7F32",
+                          transform: "translateY(-1px)",
+                        },
+                      }}
+                    >
+                      <RefreshCw size={16} />
+                      Sync Products
+                    </GlassButton>
+                  </Tooltip>
+                </Box>
                 
                 {/* Search Bar */}
                 <TextField
@@ -2251,7 +2422,7 @@ export const CreatorKit = () => {
                   }}
                 />
                 
-                <Box sx={{ maxHeight: "400px", overflowY: "auto" }}>
+                <Box sx={{ maxHeight: "440px", overflowY: "auto" }}>
                   {filteredProducts.length === 0 ? (
                     <Box
                       sx={{
@@ -2410,6 +2581,8 @@ export const CreatorKit = () => {
                 </Box>
               </GlassBox>
             )}
+
+
 
             {/* Product Editor with Tabs */}
             {activeProductId && (

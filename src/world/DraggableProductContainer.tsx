@@ -131,11 +131,23 @@ const DraggableProductContainer = ({
 
     const model = product.models[envProduct.modelIndex];
     if (!model?.sources?.[0]?.url) {
+      // Auto-fallback to first image if 3D model is not available
+      console.log(`⚠️ 3D model at index ${envProduct.modelIndex} is not available for product ${envProduct.id}, auto-switching to first image`);
+      
+      // Update the environment product to use first image
+      const { modifyEnvProduct } = useEnvProductStore.getState();
+      modifyEnvProduct(envProduct.id, {
+        ...envProduct,
+        type: "PHOTO",
+        imageIndex: 0,
+        modelIndex: undefined,
+      });
+      
       return null;
     }
 
     return model.sources[0].url;
-  }, [product, envProduct.modelIndex, envProduct.type]);
+  }, [product, envProduct.modelIndex, envProduct.type, envProduct.id]);
 
   // Load the GLTF model
   const [model, setModel] = useState<GLTF | null>(null);
@@ -143,7 +155,10 @@ const DraggableProductContainer = ({
   const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-    if (!modelUrl) return;
+    if (!modelUrl) {
+      setModel(null); // Clear model if URL becomes null
+      return;
+    }
 
     let isMounted = true;
     const loadModel = async () => {
@@ -358,14 +373,12 @@ const DraggableProductContainer = ({
   const imageUrl = useMemo(() => {
     if (envProduct.imageIndex === undefined || envProduct.type !== "PHOTO")
       return null;
-    return product?.images[envProduct.imageIndex].src || "";
+    return product?.images[envProduct.imageIndex]?.src || "";
   }, [envProduct.type, envProduct.imageIndex, product?.images]);
 
-  const imageTexture = useMemo(() => {
-    if (!imageUrl) return null;
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useLoader(TextureLoader, imageUrl);
-  }, [imageUrl]);
+  const imageTexture = imageUrl ? useLoader(TextureLoader, imageUrl, (loader) => {
+    loader.setCrossOrigin('anonymous');
+  }) : null;
 
   const computedSizeForImage = useMemo(() => {
     if (!imageTexture) return null;
@@ -572,7 +585,7 @@ const DraggableProductContainer = ({
               receiveShadow
             />
           )}
-          {envProduct.type === "PHOTO" && computedSizeForImage && (
+          {envProduct.type === "PHOTO" && computedSizeForImage && imageTexture && (
             <>
               <mesh rotation={computedRotation} ref={meshRef}>
                 <planeGeometry
