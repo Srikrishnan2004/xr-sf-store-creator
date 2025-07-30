@@ -22,7 +22,7 @@ export const App = () => {
 
   return (
     <>
-      <Skybox />
+      {/* <Skybox /> */}
       <Lights />
       <Physics gravity={[0, -20, 0]}>
         <Ground />
