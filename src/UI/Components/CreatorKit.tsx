@@ -1230,6 +1230,7 @@ export const CreatorKit = () => {
   );
   const [assetSource, setAssetSource] = useState<"LIBRARY" | "OWN">("LIBRARY");
   const [productSearchQuery, setProductSearchQuery] = useState<string>("");
+  const [hoveredButton, setHoveredButton] = useState<string | null>(null);
 
   // Track previous state for products / assets to enable discard
   const [previousProductState, setPreviousProductState] = useState<EnvProduct | null>(null);
@@ -2825,14 +2826,35 @@ export const CreatorKit = () => {
       {/* Footer */}
       <Box sx={{ p: 3, borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
         {!activeProductId && !activeAssetId ? (
-          <GlassButton
-            isPrimary
+          <Button
+            variant="contained"
             onClick={handleSaveStore}
+            onMouseEnter={() => setHoveredButton('save')}
+            onMouseLeave={() => setHoveredButton(null)}
             startIcon={<Save size={18} />}
-            sx={{ width: '100%' }}
+            sx={{
+              backgroundColor: "linear-gradient(135deg, #3B82F6, #1D4ED8)",
+              color: "white",
+              padding: "12px",
+              borderRadius: "12px",
+              fontFamily: 'DM Sans, sans-serif',
+              fontWeight: 600,
+              border: "1px solid #60A5FA",
+              transition: "all 0.3s ease",
+              textTransform: "none",
+              width: "100%",
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              boxShadow: "0 0 20px rgba(59, 130, 246, 0.5), 0 4px 12px rgba(59, 130, 246, 0.3)",
+              "&:hover": {
+                backgroundColor: "linear-gradient(135deg, #2563EB, #1E40AF)",
+                transform: "translateY(-2px)",
+                boxShadow: "0 0 25px rgba(59, 130, 246, 0.7), 0 6px 16px rgba(59, 130, 246, 0.4)"
+              }
+            }}
           >
             Save and Deploy Store
-          </GlassButton>
+          </Button>
         ) : (
           <Box sx={{ display: 'flex', gap: 2 }}>
             <GlassButton
