@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { driver, Driver } from "driver.js";
 import "driver.js/dist/driver.css";
 import styles from "@/UI/UI.module.scss";
-import { useComponentStore, useDriverStore, useTourStore } from "../stores/ZustandStores";
+import { useComponentStore, useDriverStore, useTourStore, useBrandStore } from "../stores/ZustandStores";
 import InfoModal from "@/UI/Components/InfoModal";
 import SettingsModal from "@/UI/Components/SettingsModal";
 import TermsConditionsModal from "@/UI/Components/TermsModal";
 import ContactUsModal from "@/UI/Components/ContactUsModal";
-import ReactAudioPlayer from "react-audio-player";
+
 import ModalWrapper from "@/world/ModalWrapper";
 import ProductSearcher from "@/UI/Components/ProductSearcher";
 import { CreatorKit } from "./Components/CreatorKit";
@@ -58,9 +58,10 @@ const UI = () => {
 
   const { activateDriver, deactivateDriver} = useDriverStore();
   const { setTourComplete } = useTourStore();
+  const { brandData } = useBrandStore();
 
   const driverRef = useRef<Driver>(undefined);
-  const audioPlayerRef = useRef<any>(null);
+  const audioPlayerRef = useRef<HTMLAudioElement>(null);
   const shouldMoveCamera = useRef(false);
 
   const [isMobile, setIsMobile] = useState(
@@ -151,15 +152,24 @@ const UI = () => {
     };
   }, [setTourComplete]);
 
+  // Update audio source when brand data changes
   useEffect(() => {
-    if(isAudioPlaying)
-    {
-      audioPlayerRef.current.audioEl.current.play();
+    if (audioPlayerRef.current && brandData?.brand_music_url) {
+      audioPlayerRef.current.load(); // Reload audio with new source
     }
-    else {
-      audioPlayerRef.current.audioEl.current.pause();
+  }, [brandData?.brand_music_url]);
+
+  useEffect(() => {
+    if (audioPlayerRef.current) {
+      if (isAudioPlaying) {
+        audioPlayerRef.current.play().catch(error => {
+          console.error('Error playing audio:', error);
+        });
+      } else {
+        audioPlayerRef.current.pause();
+      }
     }
-  },[isAudioPlaying])
+  }, [isAudioPlaying]);
 
 
   const startTour = () => {
@@ -220,11 +230,15 @@ const UI = () => {
       )}
       {isSettingsModalOpen && <ModalWrapper><SettingsModal /></ModalWrapper>}
       {isProductSearcherOpen && <ProductSearcher></ProductSearcher>}
-      <ReactAudioPlayer
-          ref={audioPlayerRef}
-          src="/media/Soundtrack.mp3" 
-          autoPlay={false}
-          loop
+      <audio
+        ref={audioPlayerRef}
+        src={brandData?.brand_music_url || "/media/Soundtrack.mp3"}
+        autoPlay={false}
+        loop
+        preload="metadata"
+        onError={(e) => {
+          console.error('Audio loading error:', e);
+        }}
       />
     </div>
   );

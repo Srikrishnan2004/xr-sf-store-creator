@@ -11,6 +11,7 @@ import Skybox from "./Skybox";
 import environmentData from "@/data/environment/EnvironmentData";
 import { useBrandStore, useEnvironmentStore } from "@/stores/ZustandStores";
 import Lights from "./Lights.jsx";
+import ErrorBoundary from "@/UI/Components/ErrorBoundary";
 
 export const App = () => {
   const {brandData} = useBrandStore();
@@ -29,7 +30,9 @@ export const App = () => {
         <Suspense fallback={null}>
           <Player />
         </Suspense>
-        <Products />
+        <ErrorBoundary>
+          <Products />
+        </ErrorBoundary>
         {environmentData[environmentType].compasses &&
           environmentData[environmentType].compasses.map((compass, index) => {
             return (

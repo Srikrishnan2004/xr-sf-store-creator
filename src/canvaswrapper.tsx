@@ -24,6 +24,7 @@ import Cookies from "js-cookie";
 import Load from "./UI/Components/Loader";
 import { ACESFilmicToneMapping, LinearToneMapping } from "three";
 import TutorialOverlay from "./UI/Components/TutorialOverlay";
+import Product from "@/Types/Product";
 
 export default function CanvasWrapper() {
   // Load brand data
@@ -110,6 +111,161 @@ export default function CanvasWrapper() {
 
   const [myProgress, setProgress] = useState(0);
   const assetLibraryRef = useRef<{[id: string]: EnvAsset}>({});
+  const cleanupPerformedRef = useRef(false);
+
+  // Function to check and fix 3D models that are no longer available
+  const fixUnavailable3DModels = (fetchedProducts: Product[], envProducts: { [id: number]: EnvProduct }) => {
+    let hasChanges = false;
+    const updatedEnvProducts = { ...envProducts };
+
+    for (const [productId, envProduct] of Object.entries(envProducts)) {
+      if (envProduct.type === "MODEL_3D" && envProduct.modelIndex !== undefined) {
+        const product = fetchedProducts.find(p => p.id === parseInt(productId));
+        if (product) {
+          const model = product.models[envProduct.modelIndex];
+          if (!model || !model.sources || model.sources.length === 0) {
+            console.log(`🔧 Fixing unavailable 3D model for product ${productId}, switching to first image`);
+            updatedEnvProducts[parseInt(productId)] = {
+              ...envProduct,
+              type: "PHOTO",
+              imageIndex: 0,
+              modelIndex: undefined,
+            };
+            hasChanges = true;
+          }
+        }
+      }
+    }
+
+    if (hasChanges) {
+      setEnvProducts(updatedEnvProducts);
+      console.log("✅ Fixed unavailable 3D models");
+    }
+
+    return hasChanges;
+  };
+
+  // Function to clean up orphaned environment products and update server
+  const cleanupOrphanedProducts = async (fetchedProducts: Product[], envProducts: { [id: number]: EnvProduct }) => {
+    const fetchedProductIds = new Set(fetchedProducts.map(p => p.id));
+    const orphanedIds = Object.keys(envProducts).filter(id => {
+      const productId = parseInt(id);
+      return !fetchedProductIds.has(productId);
+    });
+    
+    if (orphanedIds.length > 0) {
+      console.log(`🧹 Cleaning up ${orphanedIds.length} orphaned products:`, orphanedIds);
+      const cleanedEnvProducts = { ...envProducts };
+      orphanedIds.forEach(id => {
+        delete cleanedEnvProducts[parseInt(id)];
+      });
+      
+      // Update local state
+      setEnvProducts(cleanedEnvProducts);
+      
+      // Update server state via API
+      if (brandData) {
+        try {
+          console.log("🔄 Updating server with cleaned environment data...");
+          const envProductsArray = Object.values(cleanedEnvProducts);
+          const envAssetsArray = Object.values(envAssets);
+          
+          await EnvStoreService.storeEnvData(
+            brandData.brand_name,
+            envProductsArray,
+            envAssetsArray
+          );
+          console.log("✅ Server updated successfully with cleaned environment data");
+        } catch (error) {
+          console.error("❌ Error updating server with cleaned environment data:", error);
+        }
+      }
+    }
+  };
+
+  // Function to compare fetched products with environment products and log differences
+  const compareProductsWithEnvironment = (fetchedProducts: Product[], envProducts: { [id: number]: EnvProduct }) => {
+    try {
+    const fetchedProductIds = new Set(fetchedProducts.map(p => p.id));
+    const envProductIds = new Set(Object.keys(envProducts).map(id => parseInt(id)));
+    
+    // Products in fetched but not in environment
+    const onlyInFetched = fetchedProducts.filter(product => !envProductIds.has(product.id));
+    
+    // Products in environment but not in fetched
+    const onlyInEnvironment = Array.from(envProductIds).filter(id => !fetchedProductIds.has(id));
+    
+    // Products in both but with different properties
+    const commonProducts = fetchedProducts.filter(product => envProductIds.has(product.id));
+    const differences = commonProducts.map(product => {
+      const envProduct = envProducts[product.id];
+      const diff: any = { id: product.id, title: product.title };
+      
+      if (envProduct.type !== "PHOTO") {
+        diff.type = { fetched: "PHOTO", environment: envProduct.type };
+      }
+      
+      if (envProduct.scale !== 1) {
+        diff.scale = { fetched: 1, environment: envProduct.scale };
+      }
+      
+      if (envProduct.position) {
+        diff.position = { fetched: "undefined", environment: envProduct.position };
+      }
+      
+      if (envProduct.rotation) {
+        diff.rotation = { fetched: "undefined", environment: envProduct.rotation };
+      }
+      
+      if (envProduct.imageIndex !== undefined) {
+        diff.imageIndex = { fetched: "undefined", environment: envProduct.imageIndex };
+      }
+      
+      if (envProduct.modelIndex !== undefined) {
+        diff.modelIndex = { fetched: "undefined", environment: envProduct.modelIndex };
+      }
+      
+      if (envProduct.placeHolderId !== undefined) {
+        diff.placeHolderId = { fetched: "undefined", environment: envProduct.placeHolderId };
+      }
+      
+      if (envProduct.face) {
+        diff.face = { fetched: "undefined", environment: envProduct.face };
+      }
+      
+      // Only return if there are actual differences
+      const hasDifferences = Object.keys(diff).length > 2; // More than just id and title
+      return hasDifferences ? diff : null;
+    }).filter(Boolean);
+    
+    // Log differences in a structured format
+    console.log("=== PRODUCT COMPARISON RESULTS ===");
+    console.log(`Total fetched products: ${fetchedProducts.length}`);
+    console.log(`Total environment products: ${Object.keys(envProducts).length}`);
+    console.log(`Common products: ${commonProducts.length}`);
+    
+    if (onlyInFetched.length > 0) {
+      console.log(`❌ Products only in fetched (${onlyInFetched.length}):`, onlyInFetched.map(p => ({ id: p.id, title: p.title })));
+    }
+    
+    if (onlyInEnvironment.length > 0) {
+      console.log(`❌ Products only in environment (${onlyInEnvironment.length}):`, onlyInEnvironment);
+    }
+    
+    if (differences.length > 0) {
+      console.log(`⚠️ Products with property differences (${differences.length}):`, differences);
+    }
+    
+    if (onlyInFetched.length === 0 && onlyInEnvironment.length === 0 && differences.length === 0) {
+      console.log("✅ No differences found between fetched products and environment products");
+    }
+    
+    console.log("=== END COMPARISON ===");
+    } catch (error) {
+      console.error("Error in comparison function:", error);
+    }
+  };
+
   useEffect(() => {
 
     async function fetchProducts() {
@@ -139,6 +295,16 @@ export default function CanvasWrapper() {
           setEnvProducts(newEnvProducts);
           setProductsLoaded(true);
           console.log("All Products:", response);
+          
+          // Compare fetched products with environment products
+          try {
+            compareProductsWithEnvironment(response, newEnvProducts);
+          } catch (error) {
+            console.error("Error during initial comparison:", error);
+          }
+          
+          // Reset cleanup flag when new products are fetched
+          cleanupPerformedRef.current = false;
         }
       } catch (err) {
         console.error("Products error:", err);
@@ -250,6 +416,16 @@ export default function CanvasWrapper() {
               async function setResults() {
                 setEnvProducts(newEnvProducts);
                 setEnvAssets(newEnvAssets);
+                
+                // Compare final state after environment data is loaded
+                try {
+                  compareProductsWithEnvironment(products, newEnvProducts);
+                } catch (error) {
+                  console.error("Error during environment comparison:", error);
+                }
+                
+                // Reset cleanup flag when environment data is loaded
+                cleanupPerformedRef.current = false;
               }
 
               setResults().then(() => setEnvItemsLoaded(true));
@@ -301,6 +477,37 @@ export default function CanvasWrapper() {
       }
     })();
   }, [brandStatus]);
+
+  // Compare products when both fetched and environment data are loaded
+  useEffect(() => {
+    const performComparisonAndCleanup = async () => {
+      if (productsLoaded && envItemsLoaded && products.length > 0 && Object.keys(envProducts).length > 0 && !cleanupPerformedRef.current) {
+        try {
+          console.log("=== FINAL COMPARISON: Fetched Products vs Environment Products ===");
+          compareProductsWithEnvironment(products, envProducts);
+          
+                  // Fix unavailable 3D models first
+        const has3DModelFixes = fixUnavailable3DModels(products, envProducts);
+        
+        // Clean up orphaned products - only if there are orphaned products to clean
+        const orphanedProductIds = Object.keys(envProducts).filter(id => 
+          !products.some(product => product.id === parseInt(id))
+        );
+        if (orphanedProductIds.length > 0 || has3DModelFixes) {
+          console.log(`🧹 Cleaning up ${orphanedProductIds.length} orphaned products and fixing 3D models...`);
+          await cleanupOrphanedProducts(products, envProducts);
+        }
+          
+          // Mark cleanup as performed to prevent infinite loops
+          cleanupPerformedRef.current = true;
+        } catch (error) {
+          console.error("Error during product comparison:", error);
+        }
+      }
+    };
+
+    performComparisonAndCleanup();
+  }, [productsLoaded, envItemsLoaded, products]); // Removed envProducts from dependencies
 
   return (
     <div id="container">

@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import { useEnvAssetStore, useEnvProductStore } from "@/stores/ZustandStores";
+import ErrorBoundary from "@/UI/Components/ErrorBoundary";
 
 const LazyDraggableProductContainer = React.lazy(() => 
   import("./DraggableProductContainer").then(module => ({ 
@@ -17,32 +18,53 @@ const Products = () => {
   const {envProducts} = useEnvProductStore();
   const {envAssets} = useEnvAssetStore();
 
+  // Validate data to prevent React errors
+  const validEnvProducts = Object.keys(envProducts).filter(id => {
+    const product = envProducts[id];
+    return product && 
+           typeof product === 'object' && 
+           product.isEnvironmentProduct === true &&
+           typeof product.id === 'number';
+  });
+
+  const validEnvAssets = Object.keys(envAssets).filter(id => {
+    const asset = envAssets[id];
+    return asset && 
+           typeof asset === 'object' && 
+           asset.isEnvironmentAsset === true &&
+           typeof asset.id === 'string';
+  });
+
   return (
     <Suspense fallback={null}>
       {
-        Object.keys(envProducts).map((id) => {
-          return ( envProducts[id].isEnvironmentProduct &&
-            <LazyDraggableProductContainer
-              placeHolderId={envProducts[id].placeHolderId}
-              envPosition={envProducts[id].position}
-              envRotation={envProducts[id].rotation}
-              envScale={envProducts[id].scale}
-              envProduct={envProducts[id]}
-              key={id}
-            />
+        validEnvProducts.map((id) => {
+          const product = envProducts[id];
+          return (
+            <ErrorBoundary key={id}>
+              <LazyDraggableProductContainer
+                placeHolderId={product.placeHolderId}
+                envPosition={product.position}
+                envRotation={product.rotation}
+                envScale={product.scale}
+                envProduct={product}
+              />
+            </ErrorBoundary>
           );
         })
       }
       {
-        Object.keys(envAssets).map((id) => {
-          return ( envAssets[id].isEnvironmentAsset &&
-            <LazyDraggableAssetContainer
-              envPosition={envAssets[id].position}
-              envRotation={envAssets[id].rotation}
-              envScale={envAssets[id].scale}
-              envAsset={envAssets[id]}
-              key={id}
-            />
+        validEnvAssets.map((id) => {
+          const asset = envAssets[id];
+          return (
+            <ErrorBoundary key={id}>
+              <LazyDraggableAssetContainer
+                envPosition={asset.position}
+                envRotation={asset.rotation}
+                envScale={asset.scale}
+                envAsset={asset}
+              />
+            </ErrorBoundary>
           );
         })
       }
