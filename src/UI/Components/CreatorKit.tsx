@@ -54,6 +54,7 @@ import {
   Check,
   Search,
   RefreshCw,
+  Info,
 } from "lucide-react";
 import PlaceHolderData from "@/data/environment/placeHolderData/PlaceHolderData";
 import { ProductService } from "@/api/shopifyAPIService";
@@ -628,17 +629,84 @@ const FaceSelector = memo(
 
     return (
       <GlassBox sx={{ mb: 2.5 }}>
-        <Typography
-          sx={{
-          fontFamily: "'DM Sans', sans-serif",
-            color: "white",
-            fontSize: "16px",
-          fontWeight: 700,
-            mb: 1.5,
-          }}
-        >
-          Player Face Direction
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+          <Typography
+            sx={{
+              fontFamily: "'DM Sans', sans-serif",
+              color: "white",
+              fontSize: "16px",
+              fontWeight: 700,
+            }}
+          >
+            Player Facing Direction
+          </Typography>
+          <Tooltip
+            title={
+              <Box sx={{ p: 1 }}>
+                <Typography
+                  sx={{
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: '16px',
+                    fontWeight: 700,
+                    color: 'white',
+                    mb: 1,
+                    textAlign: 'center',
+                  }}
+                >
+                  Player Facing Direction
+                </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: '14px',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    lineHeight: '1.5',
+                    textAlign: 'left',
+                  }}
+                >
+                  Set the Direction based on where the player should stand to view your product — it's the opposite of the side your product is facing. For example, if your product faces South, set the direction to North so the player appears in front of it. You can use the floor map (with compass markers) to easily decide directions while placing your product.
+                </Typography>
+              </Box>
+            }
+            placement="top"
+            arrow
+            sx={{
+              '& .MuiTooltip-tooltip': {
+                background: 'rgba(0, 0, 0, 0.95)',
+                color: 'white',
+                fontSize: '14px',
+                padding: '20px 24px',
+                borderRadius: '12px',
+                border: '1px solid rgba(255, 127, 50, 0.3)',
+                maxWidth: '400px',
+                lineHeight: '1.5',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+              },
+              '& .MuiTooltip-arrow': {
+                color: 'rgba(0, 0, 0, 0.95)',
+              },
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "20px",
+                height: "20px",
+                cursor: "pointer",
+                color: "rgba(255, 127, 50, 0.8)",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  color: "#FF7F32",
+                  transform: "scale(1.1)",
+                },
+              }}
+            >
+              <Info size={16} />
+            </Box>
+          </Tooltip>
+        </Box>
         <Typography
           sx={{
             fontFamily: "'DM Sans', sans-serif",
@@ -647,7 +715,7 @@ const FaceSelector = memo(
             mb: 1.5,
           }}
         >
-          Direction player faces when placing the object
+          Direction the player faces when viewing the product
         </Typography>
         <Box sx={{ display: "flex", gap: 1.5 }}>
           {faceOptions.map((opt) => (
@@ -1230,6 +1298,7 @@ export const CreatorKit = () => {
   );
   const [assetSource, setAssetSource] = useState<"LIBRARY" | "OWN">("LIBRARY");
   const [productSearchQuery, setProductSearchQuery] = useState<string>("");
+  const [hoveredButton, setHoveredButton] = useState<string | null>(null);
 
   // Track previous state for products / assets to enable discard
   const [previousProductState, setPreviousProductState] = useState<EnvProduct | null>(null);
@@ -2825,14 +2894,35 @@ export const CreatorKit = () => {
       {/* Footer */}
       <Box sx={{ p: 3, borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
         {!activeProductId && !activeAssetId ? (
-          <GlassButton
-            isPrimary
+          <Button
+            variant="contained"
             onClick={handleSaveStore}
+            onMouseEnter={() => setHoveredButton('save')}
+            onMouseLeave={() => setHoveredButton(null)}
             startIcon={<Save size={18} />}
-            sx={{ width: '100%' }}
+            sx={{
+              backgroundColor: "linear-gradient(135deg, #3B82F6, #1D4ED8)",
+              color: "white",
+              padding: "12px",
+              borderRadius: "12px",
+              fontFamily: 'DM Sans, sans-serif',
+              fontWeight: 600,
+              border: "1px solid #60A5FA",
+              transition: "all 0.3s ease",
+              textTransform: "none",
+              width: "100%",
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              boxShadow: "0 0 20px rgba(59, 130, 246, 0.5), 0 4px 12px rgba(59, 130, 246, 0.3)",
+              "&:hover": {
+                backgroundColor: "linear-gradient(135deg, #2563EB, #1E40AF)",
+                transform: "translateY(-2px)",
+                boxShadow: "0 0 25px rgba(59, 130, 246, 0.7), 0 6px 16px rgba(59, 130, 246, 0.4)"
+              }
+            }}
           >
             Save and Deploy Store
-          </GlassButton>
+          </Button>
         ) : (
           <Box sx={{ display: 'flex', gap: 2 }}>
             <GlassButton
