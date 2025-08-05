@@ -18,6 +18,8 @@ import CocktailDenPlaceHolderData from "./placeHolderData/CocktailDen";
 import PetalPavilionPlaceHolderData from "./placeHolderData/PetalPavilion";
 import AutoHavenPlaceHolderData from "./placeHolderData/AutoHaven";
 import BarbieClutchPlaceHolderData from "./placeHolderData/BarbieClutch";
+import MerryMeadowPlaceHolderData from "./placeHolderData/MerryMeadow";
+import SovereignAtriumPlaceHolderData from "./placeHolderData/SovereignAtrium";
 
 interface EnvironmentData {
   [environment_name: string]: {
@@ -822,11 +824,92 @@ const environmentData: EnvironmentData = {
         rotation: [0, -90, 0],
         scale: 4,
       },
-      
     ],
     compasses: [
       {
         position: [0, 0.1, 0],
+        rotation: [-90, 0, 0],
+        scale: 5,
+      },
+    ],
+  },
+  MERRYMEADOW: {
+    playerSpeed: 17,
+    playerHeight: 4,
+    maxThreshold: 30 * 1024 * 1024, //30MB
+    placeHolderData: MerryMeadowPlaceHolderData,
+    initialGSAP: {
+      start: {
+        position: [0, 6, -15],
+        rotation: [5, 180, 0],
+        duration: 0,
+      },
+      update: [
+        {
+          position: [0, 6, -45],
+          rotation: [5, 180, 0],
+          duration: 2,
+        },
+      ],
+    },
+    televisions: [
+      {
+        position: [11.019, 11, 25.11],
+        rotation: [0, 180 - 45 - 10, 0],
+        scale: 2.45,
+      },
+    ],
+    brandPosters: [
+      {
+        position: [23.150, 2.766, -1.351],
+        rotation: [0, -90 - 45, 0],
+        scale: 3,
+      },
+    ],
+    compasses: [
+      {
+        position: [0, 0.25, 0],
+        rotation: [-90, 0, 0],
+        scale: 5,
+      },
+    ],
+  },
+  SOVEREIGNATRIUM: {
+    playerSpeed: 17,
+    playerHeight: 4,
+    maxThreshold: 30 * 1024 * 1024, //30MB
+    placeHolderData: SovereignAtriumPlaceHolderData,
+    initialGSAP: {
+      start: {
+        position: [0, 6, 0],
+        rotation: [5, 30, 0],
+        duration: 0,
+      },
+      update: [
+        {
+          position: [0, 6, 15],
+          rotation: [5, 0, 0],
+          duration: 2,
+        },
+      ],
+    },
+    televisions: [
+      {
+        position: [0, 5.400, 18.5],
+        rotation: [0, 90, 0],
+        scale: 0.45,
+      },
+    ],
+    brandPosters: [
+      {
+        position: [-12, 5.400, -18.7],
+        rotation: [0, 0 , 0],
+        scale: 2,
+      },
+    ],
+    compasses: [
+      {
+        position: [0, 0.25, 0],
         rotation: [-90, 0, 0],
         scale: 5,
       },
