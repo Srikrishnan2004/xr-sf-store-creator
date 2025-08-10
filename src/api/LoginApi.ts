@@ -21,15 +21,30 @@ export const loginUser = async (credentials: LoginCredentials) => {
         }),
       });
 
+      // Parse the response data regardless of status code
+      const data = await response.json();
+      
+      // For 401 (Unauthorized) and other expected error responses, return the data
+      // Let the component handle success/failure based on the response content
+      if (response.status === 401 || response.status === 400 || response.status === 422) {
+        return data; // Return error response data to component
+      }
+
+      // Only throw for unexpected server errors (5xx) or network issues
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
+      // Return successful response data
       return data;
     } catch (error) {
+      // Only throw for actual network/fetch errors, not business logic errors
+      if (error instanceof Error && error.message.includes('HTTP error!')) {
+        throw error; // Re-throw HTTP errors
+      }
+      
       throw new Error(
-        `Login failed: ${
+        `Network error: ${
           error instanceof Error ? error.message : "Unknown error"
         }`
       );
@@ -43,8 +58,12 @@ export const getGoogleUserInfo = async (accessToken: string) => {
     return response.json();
 };
 
-export const checkGoogleOauth = async(email: string,oauthProviderId:string,name:string) =>{
-    try{
+export const checkGoogleOauth = async (
+  email: string,
+  oauthProviderId: string,
+  name: string
+) => {
+  try {
     const backendResponse = await fetch(API_ENDPOINTS.OAUTH_LOGIN, {
         method: 'POST',
         headers: {
@@ -57,13 +76,28 @@ export const checkGoogleOauth = async(email: string,oauthProviderId:string,name:
           region:"global"
         }),
       });
+      
+      // Parse the response data regardless of status code
+      const data = await backendResponse.json();
+      
+      // For 401 (Unauthorized) and other expected error responses, return the data
+      // Let the component handle success/failure based on the response content
+      if (backendResponse.status === 401 || backendResponse.status === 400 || backendResponse.status === 422 || backendResponse.status === 409 || backendResponse.status === 500) {
+        return data; // Return error response data to component
+      }
+
+      // Only throw for unexpected server errors (5xx) or network issues
       if (!backendResponse.ok) {
         throw new Error(`HTTP error! status: ${backendResponse.status}`);
-    }
+      }
 
-    const data = await backendResponse.json();
-    return data;
+      return data;
 } catch (error) {
+    // Only throw for actual network/fetch errors, not business logic errors
+    if (error instanceof Error && error.message.includes('HTTP error!')) {
+      throw error; // Re-throw HTTP errors
+    }
+    
     throw new Error(
         `OAuth login failed: ${
             error instanceof Error ? error.message : "Unknown error"
