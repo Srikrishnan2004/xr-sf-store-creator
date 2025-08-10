@@ -49,6 +49,15 @@ export default function Login() {
         );
         console.log("Backend OAuth result:", backendResult);
 
+        // Check if the backend result contains an error message
+        if (backendResult.error || backendResult.message?.toLowerCase().includes('error') || backendResult.message?.toLowerCase().includes('failed')) {
+          // Display the backend error message
+          toast.error(backendResult.message || backendResult.error || "Google authentication failed");
+          localStorage.removeItem("user");
+          Cookies.remove("accessToken");
+          return;
+        }
+
         if (backendResult.message === "OAuth login successful") {
           // Set access token with environment-specific config
           Cookies.set("accessToken", backendResult.token, getCookieConfig());
@@ -72,7 +81,15 @@ export default function Login() {
           );
 
           if (!postResponse.ok) {
-            throw new Error(`API returned status ${postResponse.status}`);
+            // Try to get error message from response
+            let errorMessage = "Brand verification failed";
+            try {
+              const errorData = await postResponse.json();
+              errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch {
+              // If we can't parse the error response, use default message
+            }
+            throw new Error(errorMessage);
           }
 
           const data = await postResponse.json();
@@ -86,14 +103,19 @@ export default function Login() {
             } else {
               localStorage.removeItem("user");
               Cookies.remove("accessToken");
-              toast.error("This is not your configuration");
+              // Display backend message if available, otherwise use default
+              const brandErrorMsg = data.message || data.error || "This is not your configuration";
+              toast.error(brandErrorMsg);
             }
           } else {
             localStorage.removeItem("user");
             Cookies.remove("accessToken");
-            toast.error("This is not your configuration");
+            // Display backend message if available, otherwise use default
+            const brandErrorMsg = data.message || data.error || "This is not your configuration";
+            toast.error(brandErrorMsg);
           }
         } else {
+          // Handle case where backend returns unexpected response
           toast.error(backendResult.message || "Google authentication failed");
           localStorage.removeItem("user");
           Cookies.remove("accessToken");
@@ -161,6 +183,13 @@ export default function Login() {
     try {
       const result = await loginUser({ email, password });
 
+      // Check if the result contains an error message from backend
+      if (result.error || result.message?.toLowerCase().includes('error') || result.message?.toLowerCase().includes('failed')) {
+        // Display the backend error message
+        toast.error(result.message || result.error || "Login failed");
+        return;
+      }
+
       if (result.success) {
         toast.success(result.message || "Login successful ✅");
 
@@ -187,7 +216,15 @@ export default function Login() {
         );
 
         if (!postResponse.ok) {
-          throw new Error(`API returned status ${postResponse.status}`);
+          // Try to get error message from response
+          let errorMessage = "Brand verification failed";
+          try {
+            const errorData = await postResponse.json();
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch {
+            // If we can't parse the error response, use default message
+          }
+          throw new Error(errorMessage);
         }
 
         const data = await postResponse.json();
@@ -201,19 +238,26 @@ export default function Login() {
           } else {
             localStorage.removeItem("user");
             Cookies.remove("accessToken");
-            toast.error("This is not your configuration");
+            // Display backend message if available, otherwise use default
+            const brandErrorMsg = data.message || data.error || "This is not your configuration";
+            toast.error(brandErrorMsg);
           }
         } else {
           localStorage.removeItem("user");
           Cookies.remove("accessToken");
-          toast.error("This is not your configuration");
+          // Display backend message if available, otherwise use default
+          const brandErrorMsg = data.message || data.error || "This is not your configuration";
+          toast.error(brandErrorMsg);
         }
       } else {
+        // Handle case where backend returns success: false
         toast.error(result.message || "Login failed ❌");
       }
     } catch (err) {
       console.error("Login error:", err);
-      toast.error("Something went wrong. Try again later.");
+      // Display the actual error message from the backend or network
+      const errorMessage = err instanceof Error ? err.message : "Something went wrong. Try again later.";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
