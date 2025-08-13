@@ -14,7 +14,8 @@ const MARKET_TO_COUNTRY_CODE: { [key: string]: string } = {
   'GBP': 'GB', // Great Britain for British Pound
   'USD': 'US', // United States for US Dollar
   'GER': 'DE',  // Germany
-  'UAE': 'AE'  // United Arab Emirates
+  'UAE': 'AE',  // United Arab Emirates
+  'AUS': 'AU'  // Australia
 };
 
 interface ProductResponse {
