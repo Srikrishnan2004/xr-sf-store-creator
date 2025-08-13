@@ -13,7 +13,8 @@ const MARKET_TO_COUNTRY_CODE: { [key: string]: string } = {
   'INR': 'IN', // India for Indian Rupee
   'GBP': 'GB', // Great Britain for British Pound
   'USD': 'US', // United States for US Dollar
-  'GER': 'DE'  // Germany
+  'GER': 'DE',  // Germany
+  'UAE': 'AE'  // United Arab Emirates
 };
 
 interface ProductResponse {
