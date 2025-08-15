@@ -1,5 +1,5 @@
 import React, { Suspense } from "react";
-import { useEnvAssetStore, useEnvProductStore } from "@/stores/ZustandStores";
+import { useEnvAssetStore, useEnvProductStore, useComponentStore } from "@/stores/ZustandStores";
 import ErrorBoundary from "@/UI/Components/ErrorBoundary";
 
 const LazyDraggableProductContainer = React.lazy(() => 
@@ -17,14 +17,23 @@ const LazyDraggableAssetContainer = React.lazy(() =>
 const Products = () => {
   const {envProducts} = useEnvProductStore();
   const {envAssets} = useEnvAssetStore();
+  const {products} = useComponentStore();
 
-  // Validate data to prevent React errors
+  // Validate data to prevent React errors and check product status
   const validEnvProducts = Object.keys(envProducts).filter(id => {
-    const product = envProducts[id];
-    return product && 
-           typeof product === 'object' && 
-           product.isEnvironmentProduct === true &&
-           typeof product.id === 'number';
+    const envProduct = envProducts[id];
+    
+    // Basic validation
+    if (!envProduct || 
+        typeof envProduct !== 'object' || 
+        envProduct.isEnvironmentProduct !== true ||
+        typeof envProduct.id !== 'number') {
+      return false;
+    }
+    
+    // Check if the corresponding product exists and is ACTIVE
+    const product = products.find(p => p.id === envProduct.id);
+    return product && product.status === "ACTIVE";
   });
 
   const validEnvAssets = Object.keys(envAssets).filter(id => {
