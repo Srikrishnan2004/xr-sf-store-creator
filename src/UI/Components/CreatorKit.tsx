@@ -2072,11 +2072,19 @@ export const CreatorKit = () => {
         return !freshProducts.find(freshProduct => freshProduct.id === placedProduct.id);
       });
 
-      console.log("🔍 Missing products check:", {
+      // Check for inactive products (products that exist but are not ACTIVE)
+      const inactiveProducts = placedProducts.filter(placedProduct => {
+        const freshProduct = freshProducts.find(fp => fp.id === placedProduct.id);
+        return freshProduct && freshProduct.status !== "ACTIVE";
+      });
+
+      console.log("🔍 Missing and inactive products check:", {
         placedProductsCount: placedProducts.length,
         freshProductsCount: freshProducts.length,
         missingProductsCount: missingProducts.length,
+        inactiveProductsCount: inactiveProducts.length,
         missingProductIds: missingProducts.map(p => p.id),
+        inactiveProductIds: inactiveProducts.map(p => p.id),
         cleanupPerformed: cleanupPerformedRef.current,
         currentEnvProductsCount: Object.keys(currentEnvProducts).length
       });
@@ -2086,37 +2094,85 @@ export const CreatorKit = () => {
         currentEnvProducts[missingProduct.id]
       );
 
-      console.log("🔍 Double-check missing products:", {
+      // Double-check if inactive products still exist in the current environment data
+      const stillInactiveProducts = inactiveProducts.filter(inactiveProduct => 
+        currentEnvProducts[inactiveProduct.id]
+      );
+
+      console.log("🔍 Double-check missing and inactive products:", {
         originalMissingCount: missingProducts.length,
+        originalInactiveCount: inactiveProducts.length,
         stillMissingCount: stillMissingProducts.length,
-        stillMissingIds: stillMissingProducts.map(p => p.id)
+        stillInactiveCount: stillInactiveProducts.length,
+        stillMissingIds: stillMissingProducts.map(p => p.id),
+        stillInactiveIds: stillInactiveProducts.map(p => p.id)
       });
 
-      if (stillMissingProducts.length > 0 && !cleanupPerformedRef.current) {
+      const problematicProducts = [...stillMissingProducts, ...stillInactiveProducts];
+
+      if (problematicProducts.length > 0 && !cleanupPerformedRef.current) {
         // Close the loading dialog
         Swal.close();
 
-        // Show missing products error
+        // Show problematic products error
         const missingProductNames = stillMissingProducts.map(product => {
           const originalProduct = products.find(p => p.id === product.id);
           return originalProduct?.title || `Product ID: ${product.id}`;
-        }).join(', ');
+        });
+
+        const inactiveProductNames = stillInactiveProducts.map(product => {
+          const freshProduct = freshProducts.find(p => p.id === product.id);
+          return `${freshProduct?.title || `Product ID: ${product.id}`} (Status: ${freshProduct?.status || 'Unknown'})`;
+        });
+
+        let html = '<div style="text-align: left; margin-bottom: 20px;">';
+        
+        if (stillMissingProducts.length > 0 && stillInactiveProducts.length > 0) {
+          html += `
+            <p>Some products placed in your environment have issues:</p>
+            <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px; margin: 15px 0;">
+              <strong>Missing Products:</strong><br/>
+              ${missingProductNames.join(', ')}<br/><br/>
+              <strong>Inactive Products:</strong><br/>
+              ${inactiveProductNames.join(', ')}
+            </div>
+            <p style="font-size: 14px; color: #ccc;">
+              Missing products might have been deleted from your Shopify dashboard. 
+              Inactive products have been set to Draft/Archived status. 
+              Please remove them from your environment or restore/activate them in Shopify.
+            </p>
+          `;
+        } else if (stillMissingProducts.length > 0) {
+          html += `
+            <p>Some products placed in your environment are no longer available in your Shopify store:</p>
+            <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px; margin: 15px 0;">
+              <strong>Missing Products:</strong><br/>
+              ${missingProductNames.join(', ')}
+            </div>
+            <p style="font-size: 14px; color: #ccc;">
+              You might have deleted these products from your Shopify dashboard. 
+              Please remove them from your environment or restore them in Shopify.
+            </p>
+          `;
+        } else if (stillInactiveProducts.length > 0) {
+          html += `
+            <p>Some products placed in your environment are no longer active:</p>
+            <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px; margin: 15px 0;">
+              <strong>Inactive Products:</strong><br/>
+              ${inactiveProductNames.join(', ')}
+            </div>
+            <p style="font-size: 14px; color: #ccc;">
+              These products have been set to Draft/Archived status in your Shopify dashboard. 
+              Please remove them from your environment or activate them in Shopify.
+            </p>
+          `;
+        }
+        
+        html += '</div>';
 
         const result = await Swal.fire({
-          title: "Oops! Missing Products Detected",
-          html: `
-            <div style="text-align: left; margin-bottom: 20px;">
-              <p>Some products placed in your environment are no longer available in your Shopify store:</p>
-              <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px; margin: 15px 0;">
-                <strong>Missing Products:</strong><br/>
-                ${missingProductNames}
-              </div>
-              <p style="font-size: 14px; color: #ccc;">
-                You might have deleted these products from your Shopify dashboard. 
-                Please remove them from your environment or restore them in Shopify.
-              </p>
-            </div>
-          `,
+          title: stillMissingProducts.length > 0 ? "Missing/Inactive Products Detected" : "Inactive Products Detected",
+          html: html,
           icon: "warning",
           showConfirmButton: true,
           showCancelButton: true,
@@ -2151,10 +2207,10 @@ export const CreatorKit = () => {
               },
             });
 
-            // Remove missing products from environment using current data
+            // Remove problematic products from environment using current data
             const updatedEnvProducts = { ...currentEnvProducts };
-            stillMissingProducts.forEach(missingProduct => {
-              delete updatedEnvProducts[missingProduct.id];
+            problematicProducts.forEach(problematicProduct => {
+              delete updatedEnvProducts[problematicProduct.id];
             });
             setEnvProducts(updatedEnvProducts);
 
@@ -2187,9 +2243,15 @@ export const CreatorKit = () => {
             await new Promise(resolve => setTimeout(resolve, 100));
 
             // Show success message for refresh
+            const updateMessage = stillMissingProducts.length > 0 && stillInactiveProducts.length > 0 
+              ? "Missing and inactive products have been removed from your environment and server. You can now save your store."
+              : stillMissingProducts.length > 0 
+                ? "Missing products have been removed from your environment and server. You can now save your store."
+                : "Inactive products have been removed from your environment and server. You can now save your store.";
+                
             Swal.fire({
               title: "Environment Updated",
-              text: "Missing products have been removed from your environment and server. You can now save your store.",
+              text: updateMessage,
               icon: "success",
               customClass: {
                 title: styles.swalTitle,
@@ -2214,10 +2276,10 @@ export const CreatorKit = () => {
           }
         }
         return;
-      } else if (stillMissingProducts.length > 0 && cleanupPerformedRef.current) {
-        // If cleanup has already been performed but there are still missing products,
+      } else if (problematicProducts.length > 0 && cleanupPerformedRef.current) {
+        // If cleanup has already been performed but there are still problematic products,
         // proceed directly to saving without showing the modal
-        console.log("🔄 Cleanup already performed, proceeding with save despite missing products");
+        console.log("🔄 Cleanup already performed, proceeding with save despite problematic products");
       }
 
       // Close the loading dialog
