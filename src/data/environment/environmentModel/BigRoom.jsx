@@ -35,6 +35,12 @@ const BigRoomModel = () => {
             geometry={memoizedNodes.Mesh_3.geometry}
             material={memoizedMaterials.phong2}
           />
+          <mesh
+          castShadow
+          receiveShadow
+          geometry={nodes.Mesh_4.geometry}
+          material={materials['model_1.001']}
+          />
       </group>
     </group>
   );
