@@ -36,7 +36,7 @@ export default function CanvasWrapper() {
   const navigate = useNavigate();
 
   // Environments that should use LinearToneMapping
-  const linearToneMappingEnvironments = ["GLOWBAR", "LUXECRADLE","GARDENATELIER"];
+  const linearToneMappingEnvironments = ["GLOWBAR", "LUXECRADLE","GARDENATELIER","INDIGOCHAMBER"];
 
   const toneMappingExposures: { [key: string]: number } = {
     SILKENHALL: 1.4,

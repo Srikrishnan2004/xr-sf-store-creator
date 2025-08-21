@@ -21,6 +21,7 @@ import BarbieClutchPlaceHolderData from "./placeHolderData/BarbieClutch";
 import MerryMeadowPlaceHolderData from "./placeHolderData/MerryMeadow";
 import SovereignAtriumPlaceHolderData from "./placeHolderData/SovereignAtrium";
 import SilkenHallPlaceHolderData from "./placeHolderData/SilkenHall";
+import IndigoChamberPlaceHolderData from "./placeHolderData/IndigoChamber";
 
 interface EnvironmentData {
   [environment_name: string]: {
@@ -952,6 +953,47 @@ const environmentData: EnvironmentData = {
     compasses: [
       {
         position: [0, 0.25, 0],
+        rotation: [-90, 0, 0],
+        scale: 5,
+      },
+    ],
+  },
+  INDIGOCHAMBER: {
+    playerSpeed: 10,
+    playerHeight: 2,
+    maxThreshold: 30 * 1024 * 1024, //30MB
+    placeHolderData: IndigoChamberPlaceHolderData,
+    initialGSAP: {
+      start: {
+        position: [0, 3.5, 0],
+        rotation: [5, 30, 0],
+        duration: 0,
+      },
+      update: [
+        {
+          position: [0, 3.5, 15],
+          rotation: [5, 0, 0],
+          duration: 2,
+        },
+      ],
+    },
+    televisions: [
+      {
+        position: [-18.25, 5.2, 0],
+        rotation: [0, 0, 0],
+        scale: 0.4,
+      },
+    ],
+    brandPosters: [
+      {
+        position: [18.25, 5.3, 0],
+        rotation: [0, -90, 0],
+        scale: 3.5,
+      },
+    ],
+    compasses: [
+      {
+        position: [0, 0.05, 0],
         rotation: [-90, 0, 0],
         scale: 5,
       },
