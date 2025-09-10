@@ -522,7 +522,8 @@ const DraggableAssetContainer = ({
           anchor={[0, 0, 0]}
           offset={pivotOffset}
           depthTest={false}
-          scale={1.25 * (scale >= 1 ? scale : 1)}
+          fixed
+          scale={150}
           activeAxes={[isActive, isActive, isActive]}
           visible={isActive}
           onDragEnd={handleObjectMove}
