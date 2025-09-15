@@ -26,6 +26,7 @@ import {
   useEnvAssetStore,
   EnvAsset,
   useBrandStore,
+  useEnvironmentStore,
 } from "../../stores/ZustandStores";
 import { ModelViewer } from "@shopify/hydrogen-react";
 import Product from "@/Types/Product";
@@ -1287,7 +1288,7 @@ export const CreatorKit = () => {
   } = useEnvAssetStore();
   const { envProducts, setEnvProducts, modifyEnvProduct, activeProductId, setActiveProductId, activeTab, setActiveTab } =
     useEnvProductStore();
-
+  const { environmentType } = useEnvironmentStore();
   const { brandData } = useBrandStore();
   const { setInputFocused, openTutorial } = useComponentStore();
 
@@ -2756,8 +2757,8 @@ export const CreatorKit = () => {
                               label="Position"
                               value={(activeEnvProduct.position as [number, number, number]) || [0, 0, 0]}
                               onChange={handlePositionChange}
-                              min={-30}
-                              max={30}
+                              min={environmentType === "FIDGETSPINNER" ? -55 : -30}
+                              max={environmentType === "FIDGETSPINNER" ? 55 : 30}
                               step={0.15}
                               icon={Move3D}
                             />
@@ -2914,8 +2915,8 @@ export const CreatorKit = () => {
                         label="Position"
                         value={(activeEnvAsset.position as [number, number, number]) || [0, 0, 0]}
                         onChange={handlePositionChange}
-                        min={-30}
-                        max={30}
+                        min={environmentType === "FIDGETSPINNER" ? -55 : -30}
+                        max={environmentType === "FIDGETSPINNER" ? 55 : 30}
                         step={0.1}
                         icon={Move3D}
                       />

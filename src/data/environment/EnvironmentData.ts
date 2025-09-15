@@ -23,6 +23,7 @@ import SovereignAtriumPlaceHolderData from "./placeHolderData/SovereignAtrium";
 import SilkenHallPlaceHolderData from "./placeHolderData/SilkenHall";
 import IndigoChamberPlaceHolderData from "./placeHolderData/IndigoChamber";
 import CrystalPalacePlaceHolderData from "./placeHolderData/CrystalPalace";
+import FidgetSpinnerPlaceHolderData from "./placeHolderData/FidgetSpinner";
 
 interface EnvironmentData {
   [environment_name: string]: {
@@ -1041,6 +1042,62 @@ const environmentData: EnvironmentData = {
     compasses: [
       {
         position: [0, 0.1, 15],
+        rotation: [-90, 0, 0],
+        scale: 6,
+      },
+    ],
+  },
+  FIDGETSPINNER: {
+    playerSpeed: 10,
+    playerHeight: 2,
+    maxThreshold: 30 * 1024 * 1024, //30MB
+    placeHolderData: FidgetSpinnerPlaceHolderData,
+    initialGSAP: {
+      start: {
+        position: [0, 4, 0],
+        rotation: [5, 0, 0],
+        duration: 0,
+      },
+      update: [
+        {
+          position: [0, 4, 13],
+          rotation: [0, 360, 0],
+          duration: 4,
+        },
+      ],
+    },
+    televisions: [
+      {
+        position: [-21, 4.520, -17.949],
+        rotation: [0, 0, 0],
+        scale: 0.3,
+      },
+      {
+        position: [28.377, 4.520, 0.288],
+        rotation: [0, -120, 0],
+        scale: 0.3,
+      },
+      {
+        position: [-4.364, 4.520, 28.892],
+        rotation: [0, 140, 0],
+        scale: 0.3,
+      },
+    ],
+    brandPosters: [
+      {
+        position: [7.9, 4.520, -38.764],
+        rotation: [0, -80, 0],
+        scale: 3,
+      },
+      {
+        position: [24.718, 4.520,27.872],
+        rotation: [0, 130, 0],
+        scale: 3,
+      },
+    ],
+    compasses: [
+      {
+        position: [-1.527, 0.5, 9.066],
         rotation: [-90, 0, 0],
         scale: 6,
       },
