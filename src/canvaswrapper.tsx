@@ -541,7 +541,7 @@ export default function CanvasWrapper() {
       {/* Tutorial Overlay - rendered at app level to appear above canvas */}
       {isTutorialOpen && (
         <TutorialOverlay
-          url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+          url="https://www.youtube.com/watch?v=wUMsbt--WHc"
           onClose={closeTutorial}
         />
       )}
