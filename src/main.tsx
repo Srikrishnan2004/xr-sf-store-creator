@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import {
   BrowserRouter as Router,
@@ -14,6 +14,7 @@ import Login from "./UI/Components/Login";
 import Register from "./UI/Components/Register";
 import CanvasWrapper from "./canvaswrapper";
 import "./index.scss";
+import Load from "./UI/Components/Loader";
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
 
@@ -93,7 +94,7 @@ function AppRouter() {
   }, []);
 
   if (isAuthenticated === null) {
-    return <div>Loading...</div>;
+    return <Load progress={0} />;
   }
 
   if(!isMobile) {
@@ -133,6 +134,8 @@ function AppRouter() {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <AppRouter />
+    <Suspense fallback={<Load progress={0} />}>
+      <AppRouter />
+    </Suspense>
   </React.StrictMode>
 );

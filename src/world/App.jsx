@@ -27,9 +27,7 @@ export const App = () => {
       <Lights />
       <Physics gravity={[0, -20, 0]}>
         <Ground />
-        <Suspense fallback={null}>
           <Player />
-        </Suspense>
         <ErrorBoundary>
           <Products />
         </ErrorBoundary>
