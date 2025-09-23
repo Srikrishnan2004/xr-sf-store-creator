@@ -6,7 +6,7 @@ import {
 } from "@/stores/ZustandStores";
 import { PivotControls, useGLTF } from "@react-three/drei";
 import { RigidBody } from "@react-three/rapier";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type Product from "../Types/Product";
 import {
   BackSide,
@@ -561,6 +561,7 @@ const DraggableProductContainer = ({
   }, [activeProductId]);
 
   return (
+    <Suspense fallback={null}>
     <RigidBody type="fixed" collisionGroups={0}>
       <group position={[0, 0, 0]} rotation={new Euler(0, 0, 0, "YZX")}>
         <PivotControls
@@ -610,6 +611,7 @@ const DraggableProductContainer = ({
         </PivotControls>
       </group>
     </RigidBody>
+    </Suspense>
   );
 };
 

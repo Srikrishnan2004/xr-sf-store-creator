@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import { Perf } from 'r3f-perf';
@@ -517,26 +517,33 @@ export default function CanvasWrapper() {
   }, [productsLoaded, envItemsLoaded, products]); // Removed envProducts from dependencies
 
   return (
+      <Suspense fallback={<Load progress={myProgress} />}>
     <div id="container">
-      {myProgress >= 100 ? (
-        <UI />
+      {myProgress == 100 ? (
+        <UI /> 
       ) : (
         <Load progress={myProgress} />
       )}
-      {myProgress >= 100 && (
-        <div className="canvas-container">
-          <Canvas camera={{ fov: 45 }} 
-          gl={{
-            toneMapping: environmentType && linearToneMappingEnvironments.includes(environmentType) ? LinearToneMapping : ACESFilmicToneMapping,
-            toneMappingExposure: (environmentType && toneMappingExposures[environmentType]) || 1,
-          }}
-          shadows>
-            <React.Suspense fallback={null}>
+      {myProgress >= 90 && (
+          <div className="canvas-container">
+            <Canvas
+              camera={{ fov: 45 }}
+              gl={{
+                toneMapping:
+                  environmentType &&
+                  linearToneMappingEnvironments.includes(environmentType)
+                    ? LinearToneMapping
+                    : ACESFilmicToneMapping,
+                toneMappingExposure:
+                  (environmentType && toneMappingExposures[environmentType]) ||
+                  1,
+              }}
+              shadows
+            >
               {isAdvancedPerfVisible && <Perf position="top-right" />}
               <App />
-            </React.Suspense>
-          </Canvas>
-        </div>
+            </Canvas>
+          </div>
       )}
 
       {/* Tutorial Overlay - rendered at app level to appear above canvas */}
@@ -547,5 +554,6 @@ export default function CanvasWrapper() {
         />
       )}
     </div>
+      </Suspense>
   );
 }
