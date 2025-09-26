@@ -24,6 +24,7 @@ import SilkenHallPlaceHolderData from "./placeHolderData/SilkenHall";
 import IndigoChamberPlaceHolderData from "./placeHolderData/IndigoChamber";
 import CrystalPalacePlaceHolderData from "./placeHolderData/CrystalPalace";
 import FidgetSpinnerPlaceHolderData from "./placeHolderData/FidgetSpinner";
+import GrandGalleriaPlaceHolderData from "./placeHolderData/GrandGalleria";
 
 interface EnvironmentData {
   [environment_name: string]: {
@@ -1098,6 +1099,52 @@ const environmentData: EnvironmentData = {
     compasses: [
       {
         position: [-1.527, 0.5, 9.066],
+        rotation: [-90, 0, 0],
+        scale: 6,
+      },
+    ],
+  },
+  GRANDGALLERIA: {
+    playerSpeed: 5,
+    playerHeight: 2,
+    maxThreshold: 30 * 1024 * 1024, //30MB
+    placeHolderData: GrandGalleriaPlaceHolderData,
+    initialGSAP: {
+      start: {
+        position: [0, 4, 10],
+        rotation: [5, 360, 0],
+        duration: 0,
+      },
+      update: [
+        {
+          position: [0, 4, 20],
+          rotation: [0, 0, 0],
+          duration: 4,
+        },
+      ],
+    },
+    televisions: [
+      {
+        position: [0, 6, -17.949],
+        rotation: [0, -90, 0],
+        scale: 0.5,
+      },
+      {
+        position: [-44.5, 4.159, 1.5],
+        rotation: [0, 0, 0],
+        scale: 0.3,
+      },
+    ],
+    brandPosters: [
+      {
+        position: [44.5, 4.159, 0],
+        rotation: [0, -90, 0],
+        scale: 4,
+      },
+    ],
+    compasses: [
+      {
+        position: [0, 0.1, 20],
         rotation: [-90, 0, 0],
         scale: 6,
       },

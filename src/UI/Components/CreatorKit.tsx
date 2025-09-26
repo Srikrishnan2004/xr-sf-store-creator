@@ -1275,6 +1275,16 @@ const PlaceholderEditor = memo(
   }
 );
 
+export const ENVIRONMENT_LIMITS = {
+  FIDGETSPINNER: 55,
+  GRANDGALLERIA: 60,
+} as const;
+
+const getEnvironmentLimit = (envType: string | undefined) => {
+  if (!envType) return 30;
+  return ENVIRONMENT_LIMITS[envType as keyof typeof ENVIRONMENT_LIMITS] || 30;
+};
+
 export const CreatorKit = () => {
   const { products, setProducts } = useComponentStore();
   const {
@@ -2757,8 +2767,8 @@ export const CreatorKit = () => {
                               label="Position"
                               value={(activeEnvProduct.position as [number, number, number]) || [0, 0, 0]}
                               onChange={handlePositionChange}
-                              min={environmentType === "FIDGETSPINNER" ? -55 : -30}
-                              max={environmentType === "FIDGETSPINNER" ? 55 : 30}
+                              min={-getEnvironmentLimit(environmentType)}
+                              max={getEnvironmentLimit(environmentType)}
                               step={0.15}
                               icon={Move3D}
                             />
@@ -2915,8 +2925,8 @@ export const CreatorKit = () => {
                         label="Position"
                         value={(activeEnvAsset.position as [number, number, number]) || [0, 0, 0]}
                         onChange={handlePositionChange}
-                        min={environmentType === "FIDGETSPINNER" ? -55 : -30}
-                        max={environmentType === "FIDGETSPINNER" ? 55 : 30}
+                        min={-getEnvironmentLimit(environmentType)}
+                        max={getEnvironmentLimit(environmentType)}
                         step={0.1}
                         icon={Move3D}
                       />

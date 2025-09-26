@@ -26,6 +26,12 @@ import { ACESFilmicToneMapping, LinearToneMapping } from "three";
 import TutorialOverlay from "./UI/Components/TutorialOverlay";
 import Product from "@/Types/Product";
 
+// FOV configuration for different environments
+const environmentFOV: { [key: string]: number } = {
+  GRANDGALLERIA: 55,
+  default: 45
+};
+
 export default function CanvasWrapper() {
   // Load brand data
   const { brandData, setBrandData } = useBrandStore();
@@ -527,7 +533,7 @@ export default function CanvasWrapper() {
       {myProgress >= 90 && (
           <div className="canvas-container">
             <Canvas
-              camera={{ fov: 45 }}
+              camera={{ fov: environmentType ? (environmentFOV[environmentType] || environmentFOV.default) : environmentFOV.default }}
               gl={{
                 toneMapping:
                   environmentType &&
