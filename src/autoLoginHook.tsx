@@ -29,6 +29,63 @@ const useAutoLogin = (redirectPath = "/dashboard") => {
     isCheckingRef.current = true;
 
     try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const brandNameFromQuery = urlParams.get("brandName");
+      const accessTokenFromQuery = urlParams.get("accessToken");
+      
+      // Check if we have access token in URL - validate it with cloud function
+      if (accessTokenFromQuery && brandNameFromQuery) {
+        console.log("Found access token in URL, validating with cloud function...");
+        
+        // Validate the token from URL with cloud function
+        const response = await fetch(
+          CLOUD_RUN_ENDPOINTS.COOKIE.VALIDATE,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessTokenFromQuery}`,
+            },
+            body: JSON.stringify({
+              region: "global"
+            })
+          }
+        );
+
+        if (response.ok) {
+          const authData = await response.json();
+          console.log("URL token validation response:", authData);
+
+          if (authData.success && authData.user) {
+            // Set the cookies from URL parameters
+            Cookies.set("accessToken", accessTokenFromQuery, getCookieConfig());
+            Cookies.set("brandName", brandNameFromQuery, getCookieConfig());
+            
+            // Store user data in localStorage
+            localStorage.setItem("user", JSON.stringify(authData.user));
+            
+            console.log("Auto-login successful via URL token, redirecting to:", redirectPath);
+            hasCheckedRef.current = true;
+            setIsChecking(false);
+            navigate(redirectPath, { replace: true });
+            return;
+          } else {
+            console.log("URL token validation failed - invalid token");
+            clearAuthData();
+            setIsChecking(false);
+            hasCheckedRef.current = true;
+            return;
+          }
+        } else {
+          console.log("URL token validation failed with status:", response.status);
+          clearAuthData();
+          setIsChecking(false);
+          hasCheckedRef.current = true;
+          return;
+        }
+      }
+
       const token = Cookies.get("accessToken"); // Use Cookies.get() instead of getCookie
 
       if (!token) {
@@ -59,8 +116,6 @@ const useAutoLogin = (redirectPath = "/dashboard") => {
         console.log("Cloud function response:", authData);
 
         if (authData.success && authData.user) {
-          const urlParams = new URLSearchParams(window.location.search);
-          const brandNameFromQuery = urlParams.get("brandName");
           const storedBrandName = Cookies.get("brandName"); // Use Cookies.get()
 
           console.log("Brand check:", {
