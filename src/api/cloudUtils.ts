@@ -6,6 +6,12 @@ const CLOUD_FUNCTION_BASE_URL = 'https://asia-south1-nodal-vigil-460311-q8.cloud
 /** Helper to build the full URL for a Cloud Function by name */
 const fn = (name: string): string => `${CLOUD_FUNCTION_BASE_URL}/${name}`;
 
+/** Helper to get the correct brand details endpoint based on fromShopify flag */
+export const getBrandDetailsEndpoint = (): string => {
+  const fromShopify = localStorage.getItem("fromShopify") === "true" || (window as any).fromShopify === true;
+  return fromShopify ? fn('app-get-brand-details-via-customurl') : fn('get-brand-details-via-customurl');
+};
+
 export const CLOUD_RUN_ENDPOINTS = {
   // Asset Management API
   ASSETS: {
@@ -17,7 +23,7 @@ export const CLOUD_RUN_ENDPOINTS = {
 
   // Brand Form API
   BRAND_FORM: {
-    GET_BRAND_DETAILS: fn('get-brand-details-via-customurl')
+    GET_BRAND_DETAILS: getBrandDetailsEndpoint()
   },
 
   // Environment Store API

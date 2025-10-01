@@ -65,6 +65,10 @@ const useAutoLogin = (redirectPath = "/dashboard") => {
             // Store user data in localStorage
             localStorage.setItem("user", JSON.stringify(authData.user));
             
+            // Set global flag and localStorage item for Shopify access
+            localStorage.setItem("fromShopify", "true");
+            (window as any).fromShopify = true;
+            
             console.log("Auto-login successful via URL token, redirecting to:", redirectPath);
             hasCheckedRef.current = true;
             setIsChecking(false);
