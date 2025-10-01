@@ -12,6 +12,18 @@ export const getBrandDetailsEndpoint = (): string => {
   return fromShopify ? fn('app-get-brand-details-via-customurl') : fn('get-brand-details-via-customurl');
 };
 
+/** Helper to get the correct Shopify products endpoint based on fromShopify flag */
+export const getShopifyProductsEndpoint = (): string => {
+  const fromShopify = localStorage.getItem("fromShopify") === "true" || (window as any).fromShopify === true;
+  return fromShopify ? fn('app-fetch-shopify-products-bulk') : fn('function-14');
+};
+
+/** Helper to get the correct environment data endpoint based on fromShopify flag */
+export const getEnvDataEndpoint = (): string => {
+  const fromShopify = localStorage.getItem("fromShopify") === "true" || (window as any).fromShopify === true;
+  return fromShopify ? fn('app-get-env-data') : fn('get-env-data');
+};
+
 export const CLOUD_RUN_ENDPOINTS = {
   // Asset Management API
   ASSETS: {
@@ -28,7 +40,7 @@ export const CLOUD_RUN_ENDPOINTS = {
 
   // Environment Store API
   ENV_STORE: {
-    GET_ENV_DATA: fn('get-env-data'),
+    GET_ENV_DATA: getEnvDataEndpoint(),
     STORE_ENV_DATA: fn('storeenvdata')
   },
 
@@ -46,7 +58,7 @@ export const CLOUD_RUN_ENDPOINTS = {
 
   // Product Fetch API
   PRODUCT_FETCH: {
-    SHOPIFY_PRODUCTS: fn('function-14')
+    SHOPIFY_PRODUCTS: getShopifyProductsEndpoint()
   },
 
   // Dashboard API
