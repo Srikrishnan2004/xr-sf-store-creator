@@ -6,22 +6,32 @@ const CLOUD_FUNCTION_BASE_URL = 'https://asia-south1-nodal-vigil-460311-q8.cloud
 /** Helper to build the full URL for a Cloud Function by name */
 const fn = (name: string): string => `${CLOUD_FUNCTION_BASE_URL}/${name}`;
 
+/** Helper to check if accessToken exists in URL parameters */
+const hasAccessTokenInURL = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.has('accessToken');
+};
+
 /** Helper to get the correct brand details endpoint based on fromShopify flag */
 export const getBrandDetailsEndpoint = (): string => {
   const fromShopify = localStorage.getItem("fromShopify") === "true" || (window as any).fromShopify === true;
-  return fromShopify ? fn('app-get-brand-details-via-customurl') : fn('get-brand-details-via-customurl');
+  const hasUrlToken = hasAccessTokenInURL();
+  return (fromShopify || hasUrlToken) ? fn('app-get-brand-details-via-customurl') : fn('get-brand-details-via-customurl');
 };
 
 /** Helper to get the correct Shopify products endpoint based on fromShopify flag */
 export const getShopifyProductsEndpoint = (): string => {
   const fromShopify = localStorage.getItem("fromShopify") === "true" || (window as any).fromShopify === true;
-  return fromShopify ? fn('app-fetch-shopify-products-bulk') : fn('function-14');
+  const hasUrlToken = hasAccessTokenInURL();
+  return (fromShopify || hasUrlToken) ? fn('app-fetch-shopify-products-bulk') : fn('function-14');
 };
 
 /** Helper to get the correct environment data endpoint based on fromShopify flag */
 export const getEnvDataEndpoint = (): string => {
   const fromShopify = localStorage.getItem("fromShopify") === "true" || (window as any).fromShopify === true;
-  return fromShopify ? fn('app-get-env-data') : fn('get-env-data');
+  const hasUrlToken = hasAccessTokenInURL();
+  return (fromShopify || hasUrlToken) ? fn('app-get-env-data') : fn('get-env-data');
 };
 
 export const CLOUD_RUN_ENDPOINTS = {
