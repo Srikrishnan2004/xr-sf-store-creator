@@ -29,6 +29,7 @@ import Product from "@/Types/Product";
 // FOV configuration for different environments
 const environmentFOV: { [key: string]: number } = {
   GRANDGALLERIA: 55,
+  SPACEPARK: 55,
   default: 45
 };
 
