@@ -2024,6 +2024,28 @@ export const CreatorKit = () => {
     [entityType, activeEnvProduct, modifyEnvProduct]
   );
 
+  const generateEmbedCode = async () => {
+
+    try {
+      // Fetch the HTML template
+      const response = await fetch('/embedTemplate.html');
+      if (!response.ok) {
+        throw new Error('Failed to fetch template');
+      }
+      
+      const rawHtmlContent = await response.text();
+      const brandUrl : string = `https://${brandData?.brand_name}.shackit.in`;
+      
+      // Replace all occurrences of the placeholder with the actual brand URL
+      const embedCode = rawHtmlContent.replaceall('BRAND_URL_PLACEHOLDER', brandUrl);
+      
+      return embedCode;
+    } catch (error) {
+      console.error('Error generating embed code:', error);
+      return null;
+    }
+  };
+
   // Save store function
   const handleSaveStore = useCallback(async () => {
     if (!brandData) return;
@@ -2314,7 +2336,7 @@ export const CreatorKit = () => {
         text: "Your store has been updated successfully!",
         icon: "success",
         showCancelButton: true,
-        confirmButtonText: "Go to your XR Store",
+        confirmButtonText:brandData.shopify_storefront_access_token === "dummy-storefront-token" ? "Copy Code" : "Go to your XR Store",
         cancelButtonText: "Stay here",
         allowOutsideClick: false,
         customClass: {
@@ -2326,9 +2348,27 @@ export const CreatorKit = () => {
           confirmButton: `${styles.swalButton} ${styles.swalConfirmButton}`,
           cancelButton: `${styles.swalButton} ${styles.swalCancelButton}`,
         },
-      }).then((result) => {
+      }).then( async (result) => {
         if (result.isConfirmed) {
-          window.open(`https://${brandData.brand_name}.shackit.in`, "_blank", "noopener,noreferrer");
+          if(brandData.shopify_storefront_access_token === "dummy-storefront-token") {
+            const embedCode = await generateEmbedCode();
+            if (embedCode) {
+              navigator.clipboard.writeText(embedCode);
+              Swal.fire({
+                title: "Code Copied",
+                text: "The code has been copied to your clipboard. Paste it in your Shopify store to enable your XR Store.",
+                icon: "success",
+              });
+            }else{
+              Swal.fire({
+                title: "Error",
+                text: "Failed to generate embed code. Please try again.",
+                icon: "error",
+              });
+            }
+          } else {
+            window.open(`https://${brandData.brand_name}.shackit.in`, "_blank", "noopener,noreferrer");
+          }
         }
       });
     } catch (error) {
