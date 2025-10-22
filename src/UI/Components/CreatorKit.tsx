@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState, memo, useEffect } from "react";
+import { EMBED_TEMPLATE } from "../../data/embedTemplate";
 import {
   Box,
   Button,
@@ -2025,19 +2026,13 @@ export const CreatorKit = () => {
   );
 
   const generateEmbedCode = async () => {
-
     try {
-      // Fetch the HTML template
-      const response = await fetch('/embedTemplate.html');
-      if (!response.ok) {
-        throw new Error('Failed to fetch template');
-      }
-      
-      const rawHtmlContent = await response.text();
-      const brandUrl : string = `https://${brandData?.brand_name}.shackit.com`;
+      // Use the inlined template instead of fetching
+      const rawHtmlContent = EMBED_TEMPLATE;
+      const brandUrl : string = `https://${brandData?.brand_name}.shackit.in`;
       
       // Replace all occurrences of the placeholder with the actual brand URL
-      const embedCode = rawHtmlContent.replaceall('BRAND_URL_PLACEHOLDER', brandUrl);
+      const embedCode = rawHtmlContent.replace(/BRAND_URL_PLACEHOLDER/g, brandUrl);
       
       return embedCode;
     } catch (error) {
