@@ -2029,7 +2029,7 @@ export const CreatorKit = () => {
     try {
       // Use the inlined template instead of fetching
       const rawHtmlContent = EMBED_TEMPLATE;
-      const brandUrl : string = `https://${brandData?.brand_name}.shackit.in`;
+      const brandUrl : string = `https://${brandData?.brand_name}.shackit.com`;
       
       // Replace all occurrences of the placeholder with the actual brand URL
       const embedCode = rawHtmlContent.replace(/BRAND_URL_PLACEHOLDER/g, brandUrl);
