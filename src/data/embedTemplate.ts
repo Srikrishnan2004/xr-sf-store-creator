@@ -115,7 +115,7 @@ export const EMBED_TEMPLATE: string = `<body>
 
         .xr-footer-text {
             color: #6b7280;
-            margin-bottom: 24px;
+            margin-bottom: 4px;
             font-size: 1rem;
         }
 
@@ -434,20 +434,6 @@ export const EMBED_TEMPLATE: string = `<body>
             <p class="xr-footer-text">
                 Can't see the store? Make sure your browser supports WebGL and has JavaScript enabled.
             </p>
-            <div class="xr-button-group">
-                <button class="xr-button xr-button-primary" onclick="openFullscreen()">
-                    <svg class="xr-icon" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
-                    </svg>
-                    <span class="xr-fullscreen-text">Full Screen Experience</span>
-                </button>
-                <a href="BRAND_URL_PLACEHOLDER" target="_blank" class="xr-button xr-button-secondary">
-                    <svg class="xr-icon" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                    </svg>
-                    Open in New Tab
-                </a>
-            </div>
         </div>
     </div>
 

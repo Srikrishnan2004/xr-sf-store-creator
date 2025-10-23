@@ -2353,12 +2353,24 @@ export const CreatorKit = () => {
                 title: "Code Copied",
                 text: "The code has been copied to your clipboard. Paste it in your Shopify store to enable your XR Store.",
                 icon: "success",
+                customClass: {
+                  title: styles.swalTitle,
+                  popup: styles.swalPopup,
+                  htmlContainer: styles.swalHtmlContainer,
+                  icon: styles.swalIcon,
+                },
               });
             }else{
               Swal.fire({
                 title: "Error",
                 text: "Failed to generate embed code. Please try again.",
                 icon: "error",
+                customClass: {
+                  title: styles.swalTitle,
+                  popup: styles.swalPopup,
+                  htmlContainer: styles.swalHtmlContainer,
+                  icon: styles.swalIcon,
+                },
               });
             }
           } else {
