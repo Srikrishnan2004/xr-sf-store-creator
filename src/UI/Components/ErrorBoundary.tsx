@@ -4,7 +4,7 @@ import { Box, Typography, Button, styled } from '@mui/material';
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
-}
+} 
 
 interface State {
   hasError: boolean;
