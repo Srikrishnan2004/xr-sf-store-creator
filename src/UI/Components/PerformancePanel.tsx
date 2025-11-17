@@ -3,13 +3,11 @@ import { useComponentStore, useEnvProductStore, useEnvAssetStore, useEnvironment
 import Product from '@/Types/Product';
 import styles from './PerformancePanel.module.scss';
 import BoltIcon from '@mui/icons-material/Bolt';
-import SpeedIcon from '@mui/icons-material/Speed';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import CloseIcon from '@mui/icons-material/Close';
-import MemoryIcon from '@mui/icons-material/Memory';
-import StorageIcon from '@mui/icons-material/Storage';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ViewInArIcon from '@mui/icons-material/ViewInAr';
 import LinearProgress from '@mui/material/LinearProgress';
 import environmentData from '@/data/environment/EnvironmentData';
 
@@ -69,7 +67,9 @@ const PerformancePanel: React.FC = () => {
   const { envAssets } = useEnvAssetStore();
   const { environmentType } = useEnvironmentStore();
   const maxThresholdBytes = environmentData[environmentType || '']?.maxThreshold || 30 * 1024 * 1024;
+  const vrThresholdBytes = 15 * 1024 * 1024; // VR support max 15 MB
   const percentageUsed = Math.min((metrics.totalEnvironmentSize / maxThresholdBytes) * 100, 100);
+  const vrPercentageUsed = Math.min((metrics.totalEnvironmentSize / vrThresholdBytes) * 100, 100);
 
   useEffect(() => {
 
@@ -213,7 +213,45 @@ const PerformancePanel: React.FC = () => {
     return { level: 'Poor', color: '#ef4444' };
   };
 
+  const getVRStatus = (): { status: string; color: string; badgeColor: string } => {
+    if (vrPercentageUsed >= 100) {
+      return { status: 'Exceeded', color: '#ef4444', badgeColor: '#ef4444' };
+    }
+    if (vrPercentageUsed >= 90) {
+      return { status: 'Critical', color: '#f97316', badgeColor: '#f97316' };
+    }
+    if (vrPercentageUsed >= 75) {
+      return { status: 'Warning', color: '#eab308', badgeColor: '#eab308' };
+    }
+    if (vrPercentageUsed >= 40) {
+      return { status: 'Good', color: '#f97316', badgeColor: '#f97316' };
+    }
+    return { status: 'Good', color: '#f97316', badgeColor: '#f97316' };
+  };
+
+  const getVRProgressColor = (): string => {
+    if (vrPercentageUsed >= 100) return '#ef4444';
+    if (vrPercentageUsed >= 90) return '#f97316';
+    if (vrPercentageUsed >= 75) return '#eab308';
+    if (vrPercentageUsed >= 50) return '#f97316';
+    return '#f97316';
+  };
+
+  const getVRWarningMessage = (): string | null => {
+    if (vrPercentageUsed >= 100) {
+      return '⚠️ VR limit exceeded! Remove assets to enable VR compatibility.';
+    }
+    if (vrPercentageUsed >= 90) {
+      return '⚠️ VR limit nearly reached!';
+    }
+    if (vrPercentageUsed >= 75) {
+      return '💡 Approaching VR limit. Monitor your asset usage.';
+    }
+    return null;
+  };
+
   const performanceInfo = getPerformanceLevel();
+  const vrStatus = getVRStatus();
 
   const handleIndicatorClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -299,9 +337,78 @@ const PerformancePanel: React.FC = () => {
                 <span className={styles.label}>Total Available:</span>
                 <span className={styles.value}>{formatFileSize(maxThresholdBytes)}</span>
               </div>
-              <div style={{display:'flex',alignItems:'center',gap:'8px',marginTop:'8px'}}>
-                <LinearProgress variant="determinate" value={percentageUsed} sx={{flex:1, height:8, borderRadius:4, backgroundColor:'rgba(255,255,255,0.1)', '& .MuiLinearProgress-bar':{backgroundColor:'#f97316'}}} />
-                <span className={styles.value}>{Math.round(percentageUsed)}%</span>
+              
+              {/* Mobile Progress Bar */}
+              <div style={{marginTop:'12px'}}>
+                <div className={styles.progressBarContainer} style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={percentageUsed} 
+                    sx={{
+                      flex:1, 
+                      height:8, 
+                      borderRadius:4, 
+                      backgroundColor:'rgba(255,255,255,0.1)', 
+                      '& .MuiLinearProgress-bar':{
+                        backgroundColor:'#f97316',
+                        transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+                      }
+                    }} 
+                  />
+                  <span className={styles.value}>{Math.round(percentageUsed)}%</span>
+                </div>
+              </div>
+              
+              {/* VR Card */}
+              <div className={styles.vrCard}>
+                <div className={styles.vrCardHeader}>
+                  <div className={styles.vrCardTitle}>
+                    <ViewInArIcon className={styles.vrIcon} />
+                    <span className={styles.label} style={{fontWeight:'500'}}>VR Compatibility</span>
+                  </div>
+                  <div 
+                    className={styles.vrStatusIndicator}
+                    style={{ backgroundColor: vrStatus.badgeColor }}
+                  >
+                    {vrStatus.status}
+                  </div>
+                </div>
+                <div className={styles.vrProgressContainer}>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={Math.min(vrPercentageUsed, 100)} 
+                    sx={{
+                      flex: 1, 
+                      height: 10, 
+                      borderRadius: 5, 
+                      backgroundColor: 'rgba(249, 115, 22, 0.2)', 
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: getVRProgressColor(),
+                        borderRadius: 5,
+                        transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease'
+                      }
+                    }} 
+                  />
+                  <span className={styles.value} style={{ marginLeft: '12px', minWidth: '45px' }}>
+                    {Math.round(vrPercentageUsed)}%
+                  </span>
+                </div>
+                <div className={styles.vrCardInfo}>
+                  <span className={styles.label} style={{fontSize: '11px'}}>
+                    {formatFileSize(metrics.totalEnvironmentSize)} / {formatFileSize(vrThresholdBytes)}
+                  </span>
+                </div>
+                {getVRWarningMessage() && (
+                  <div 
+                    className={styles.vrWarning}
+                    style={{ 
+                      borderColor: vrStatus.color,
+                      backgroundColor: `${vrStatus.color}15`
+                    }}
+                  >
+                    {getVRWarningMessage()}
+                  </div>
+                )}
               </div>
             </div>
 
